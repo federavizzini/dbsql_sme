@@ -15,14 +15,14 @@ TBLPROPERTIES ('pipelines.channel' = 'PREVIEW')
 */
 
 -- MUST Run with a Serverless Warehouse
-DROP SCHEMA IF EXISTS main.dbsql_warehouse_advisor CASCADE;
-CREATE SCHEMA IF NOT EXISTS main.dbsql_warehouse_advisor;
+DROP SCHEMA IF EXISTS chdaa_prd_platform_observability.dbsql_warehouse_advisor CASCADE;
+CREATE SCHEMA IF NOT EXISTS chdaa_prd_platform_observability.dbsql_warehouse_advisor;
   -- LOCATION 's3://<location>/'; -- Optional location parameter
-USE CATALOG main;
+USE CATALOG chdaa_prd_platform_observability;
 USE SCHEMA dbsql_warehouse_advisor;
 
 
-CREATE OR REFRESH STREAMING TABLE main.dbsql_warehouse_advisor.warehouse_query_history
+CREATE OR REFRESH STREAMING TABLE chdaa_prd_platform_observability.dbsql_warehouse_advisor.warehouse_query_history
 --TBLPROPERTIES ('pipelines.channel' = 'PREVIEW')
 SCHEDULE CRON '0 0 * * * ? *' -- hourly
 CLUSTER BY (workspace_id, warehouse_id, start_time)
@@ -185,7 +185,7 @@ AND statement_type IS NOT NULL
 
 -- Warehouse Usage
 
-CREATE OR REFRESH STREAMING TABLE main.dbsql_warehouse_advisor.warehouse_usage
+CREATE OR REFRESH STREAMING TABLE chdaa_prd_platform_observability.dbsql_warehouse_advisor.warehouse_usage
 SCHEDULE CRON '0 0 * * * ? *' -- hourly
 CLUSTER BY (workspace_id, warehouse_id,usage_start_time)
 COMMENT 'SQL Warehouse Usage'
@@ -198,7 +198,7 @@ WHERE usage_metadata.warehouse_id IS NOT NULL;
 
 
 -- Warehouse Scaling History
-CREATE OR REFRESH STREAMING TABLE main.dbsql_warehouse_advisor.warehouse_scaling_events
+CREATE OR REFRESH STREAMING TABLE chdaa_prd_platform_observability.dbsql_warehouse_advisor.warehouse_scaling_events
 SCHEDULE CRON '0 0 * * * ? *' -- hourly
 CLUSTER BY (warehouse_id,event_time)
 COMMENT 'SQL Warehouse Scaling Events from warehouse_events table'
@@ -208,7 +208,7 @@ SELECT * FROM STREAM(system.compute.warehouse_events);
 
 -- Warehouse SCD History
 -- Audit logs warehouse SCD history table (for names and other warehouse metadata such as sizing, owner, etc. )
-CREATE OR REFRESH STREAMING TABLE main.dbsql_warehouse_advisor.warehouse_raw_events
+CREATE OR REFRESH STREAMING TABLE chdaa_prd_platform_observability.dbsql_warehouse_advisor.warehouse_raw_events
 SCHEDULE CRON '0 0 * * * ? *' -- hourly
 CLUSTER BY (workspace_id, warehouse_id, event_time)
 AS 
@@ -237,13 +237,13 @@ AS
 ;
 
 
-CREATE OR REPLACE VIEW main.dbsql_warehouse_advisor.warehouse_scd
+CREATE OR REPLACE VIEW chdaa_prd_platform_observability.dbsql_warehouse_advisor.warehouse_scd
 COMMENT 'SQL Warehouse SCD Change History'
 AS (
 WITH edit_history AS (
     SELECT 
         *
-    FROM main.dbsql_warehouse_advisor.warehouse_raw_events
+    FROM chdaa_prd_platform_observability.dbsql_warehouse_advisor.warehouse_raw_events
     WHERE action_name IN ('createWarehouse', 'createEndpoint')
     QUALIFY ROW_NUMBER() OVER (
         PARTITION BY warehouse_id
@@ -254,14 +254,14 @@ WITH edit_history AS (
 
     SELECT 
         *
-    FROM main.dbsql_warehouse_advisor.warehouse_raw_events
+    FROM chdaa_prd_platform_observability.dbsql_warehouse_advisor.warehouse_raw_events
     WHERE action_name IN ('editWarehouse', 'editEndpoint')
 
     UNION ALL
 
     SELECT 
         *
-    FROM main.dbsql_warehouse_advisor.warehouse_raw_events
+    FROM chdaa_prd_platform_observability.dbsql_warehouse_advisor.warehouse_raw_events
     WHERE action_name IN ('deleteWarehouse', 'deleteEndpoint')
 )
 
