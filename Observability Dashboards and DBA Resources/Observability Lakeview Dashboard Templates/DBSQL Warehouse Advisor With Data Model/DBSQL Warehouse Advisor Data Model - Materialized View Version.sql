@@ -9,7 +9,7 @@ USE SCHEMA dbsql_warehouse_advisor;
 
 
 CREATE OR REPLACE MATERIALIZED VIEW warehouse_query_history
-SCHEDULE EVERY 1 HOUR
+SCHEDULE EVERY 12 HOUR
 PARTITIONED BY (start_date, workspace_id)
 TBLPROPERTIES ("pipelines.autoOptimize.zOrderCols" = "start_time,warehouse_id")
 COMMENT 'SQL Warehouse Query History with cleaned up exeuction metrics and query tags'
@@ -174,7 +174,7 @@ AND statement_type IS NOT NULL
 -- Warehouse Usage
 
 CREATE OR REPLACE MATERIALIZED VIEW warehouse_usage
-SCHEDULE EVERY 1 HOUR
+SCHEDULE EVERY 12 HOUR
 PARTITIONED BY (usage_start_date, workspace_id)
 TBLPROPERTIES ("pipelines.autoOptimize.zOrderCols" = "usage_start_time,warehouse_id")
 --CLUSTER BY (workspace_id, warehouse_id,usage_start_time)
@@ -190,7 +190,7 @@ WHERE usage_metadata.warehouse_id IS NOT NULL;
 
 -- Warehouse Scaling History
 CREATE OR REPLACE MATERIALIZED VIEW warehouse_scaling_events
-SCHEDULE EVERY 1 HOUR
+SCHEDULE EVERY 12 HOUR
 PARTITIONED BY (event_date, workspace_id)
 TBLPROPERTIES ("pipelines.autoOptimize.zOrderCols" = "warehouse_id,event_time")
 COMMENT 'SQL Warehouse Scaling Events from warehouse_events table'
@@ -203,7 +203,7 @@ event_time::date AS event_date
 -- Warehouse SCD History
 -- Audit logs warehouse SCD history table (for names and other warehouse metadata such as sizing, owner, etc. )
 CREATE OR REPLACE MATERIALIZED VIEW warehouse_raw_events
-SCHEDULE EVERY 1 HOUR
+SCHEDULE EVERY 12 HOUR
 PARTITIONED BY (event_date, workspace_id)
 TBLPROPERTIES ("pipelines.autoOptimize.zOrderCols" = "warehouse_id,event_time")
 AS 
