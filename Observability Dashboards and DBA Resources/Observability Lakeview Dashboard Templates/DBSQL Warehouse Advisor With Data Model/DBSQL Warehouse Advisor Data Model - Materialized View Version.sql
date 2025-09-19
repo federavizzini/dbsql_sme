@@ -1,13 +1,14 @@
 -- MV version - streaming tables are not great for 
+USE CATALOG chdaa_prd_platform_observability;
 
-DROP SCHEMA IF EXISTS main.dbsql_warehouse_advisor CASCADE;
-CREATE SCHEMA IF NOT EXISTS main.dbsql_warehouse_advisor;
+DROP SCHEMA IF EXISTS dbsql_warehouse_advisor CASCADE;
+CREATE SCHEMA IF NOT EXISTS dbsql_warehouse_advisor;
   -- LOCATION 's3://<location>/'; -- Optional location parameter
-USE CATALOG main;
+--USE CATALOG main;
 USE SCHEMA dbsql_warehouse_advisor;
 
 
-CREATE OR REPLACE MATERIALIZED VIEW main.dbsql_warehouse_advisor.warehouse_query_history
+CREATE OR REPLACE MATERIALIZED VIEW warehouse_query_history
 SCHEDULE EVERY 1 HOUR
 PARTITIONED BY (start_date, workspace_id)
 TBLPROPERTIES ("pipelines.autoOptimize.zOrderCols" = "start_time,warehouse_id")
@@ -172,7 +173,7 @@ AND statement_type IS NOT NULL
 
 -- Warehouse Usage
 
-CREATE OR REPLACE MATERIALIZED VIEW main.dbsql_warehouse_advisor.warehouse_usage
+CREATE OR REPLACE MATERIALIZED VIEW warehouse_usage
 SCHEDULE EVERY 1 HOUR
 PARTITIONED BY (usage_start_date, workspace_id)
 TBLPROPERTIES ("pipelines.autoOptimize.zOrderCols" = "usage_start_time,warehouse_id")
@@ -188,7 +189,7 @@ WHERE usage_metadata.warehouse_id IS NOT NULL;
 
 
 -- Warehouse Scaling History
-CREATE OR REPLACE MATERIALIZED VIEW main.dbsql_warehouse_advisor.warehouse_scaling_events
+CREATE OR REPLACE MATERIALIZED VIEW warehouse_scaling_events
 SCHEDULE EVERY 1 HOUR
 PARTITIONED BY (event_date, workspace_id)
 TBLPROPERTIES ("pipelines.autoOptimize.zOrderCols" = "warehouse_id,event_time")
@@ -201,7 +202,7 @@ event_time::date AS event_date
 
 -- Warehouse SCD History
 -- Audit logs warehouse SCD history table (for names and other warehouse metadata such as sizing, owner, etc. )
-CREATE OR REPLACE MATERIALIZED VIEW main.dbsql_warehouse_advisor.warehouse_raw_events
+CREATE OR REPLACE MATERIALIZED VIEW warehouse_raw_events
 SCHEDULE EVERY 1 HOUR
 PARTITIONED BY (event_date, workspace_id)
 TBLPROPERTIES ("pipelines.autoOptimize.zOrderCols" = "warehouse_id,event_time")
@@ -232,13 +233,13 @@ AS
 ;
 
 
-CREATE OR REPLACE VIEW main.dbsql_warehouse_advisor.warehouse_scd
+CREATE OR REPLACE VIEW warehouse_scd
 COMMENT 'SQL Warehouse SCD Change History'
 AS (
 WITH edit_history AS (
     SELECT 
         *
-    FROM main.dbsql_warehouse_advisor.warehouse_raw_events
+    FROM dbsql_warehouse_advisor.warehouse_raw_events
     WHERE action_name IN ('createWarehouse', 'createEndpoint')
     QUALIFY ROW_NUMBER() OVER (
         PARTITION BY warehouse_id
@@ -249,14 +250,14 @@ WITH edit_history AS (
 
     SELECT 
         *
-    FROM main.dbsql_warehouse_advisor.warehouse_raw_events
+    FROM dbsql_warehouse_advisor.warehouse_raw_events
     WHERE action_name IN ('editWarehouse', 'editEndpoint')
 
     UNION ALL
 
     SELECT 
         *
-    FROM main.dbsql_warehouse_advisor.warehouse_raw_events
+    FROM dbsql_warehouse_advisor.warehouse_raw_events
     WHERE action_name IN ('deleteWarehouse', 'deleteEndpoint')
 )
 
